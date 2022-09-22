@@ -10,10 +10,9 @@ public class AuthenticationService : IAuthenticationService
     {
         _userNameToHash = new Dictionary<string, byte[]>();
         _userNameToSalt = new Dictionary<string, byte[]>();
-        
+
         CreateUser("Peter", "p@ssword");
         CreateUser("Alex", "secret");
-        
     }
 
     public void CreateUser(string userName, string password)
@@ -48,11 +47,15 @@ public class AuthenticationService : IAuthenticationService
         }
     }
 
-    public bool ValidateUser(string userName, string password)
+    public bool ValidateUser(string userName, string password, out string token)
     {
         byte[] storePasswordHash = _userNameToHash[userName];
         byte[] salt = _userNameToSalt[userName];
 
-        return VerifyPasswordHash(password, storePasswordHash, salt);
+        bool isOk = VerifyPasswordHash(password, storePasswordHash, salt);
+
+        token = "TBA.";
+        
+        return isOk;
     }
 }

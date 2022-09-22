@@ -18,15 +18,16 @@ public class LoginController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost]
-    public IActionResult Login([FromBody] LoginDto loginDto)
+    public ActionResult<TokenDTO> Login([FromBody] LoginDto loginDto)
     {
-        if (_authenticationService.ValidateUser(loginDto.userName, loginDto.password))
+        string token;
+        if (_authenticationService.ValidateUser(loginDto.userName, loginDto.password, out token))
         {
-            return Ok();
+            return Ok(new TokenDTO(true, "You rock", token));
         }
         else
         {
-            return BadRequest("Failed login attempt");
+            return Ok(new TokenDTO(false, "Incorrect credentials", token));
         }
     }
 }
