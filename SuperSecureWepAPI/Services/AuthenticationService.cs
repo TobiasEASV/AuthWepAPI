@@ -1,4 +1,8 @@
-﻿namespace SuperSecureWepAPI.Services;
+﻿using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+
+namespace SuperSecureWepAPI.Services;
 
 public class AuthenticationService : IAuthenticationService
 {
@@ -6,8 +10,11 @@ public class AuthenticationService : IAuthenticationService
     private Dictionary<string, byte[]> _userNameToHash;
     private Dictionary<string, byte[]> _userNameToSalt;
 
-    public AuthenticationService()
+    private byte[] _secretBytes;
+
+    public AuthenticationService(byte[] secretBytes)
     {
+        _secretBytes = secretBytes;
         _userNameToHash = new Dictionary<string, byte[]>();
         _userNameToSalt = new Dictionary<string, byte[]>();
 
@@ -47,6 +54,20 @@ public class AuthenticationService : IAuthenticationService
         }
     }
 
+    private string CreateToken(string username)
+    {
+        List<Claim> claims = new List<Claim>();
+
+        claims.Add(new Claim(ClaimTypes.NameIdentifier, username));
+        var token = new JwtSecurityToken(
+            new JwtHeader(new SigningCredentials(new SymmetricSecurityKey(_secretBytes),
+                SecurityAlgorithms.HmacSha512)),
+            new JwtPayload(null, null, claims, DateTime.Now, DateTime.Now.AddMinutes(10))
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
     public bool ValidateUser(string userName, string password, out string token)
     {
         byte[] storePasswordHash = _userNameToHash[userName];
@@ -54,8 +75,8 @@ public class AuthenticationService : IAuthenticationService
 
         bool isOk = VerifyPasswordHash(password, storePasswordHash, salt);
 
-        token = "TBA.";
-        
+        token = isOk ? CreateToken(userName) : "";
+
         return isOk;
     }
 }
