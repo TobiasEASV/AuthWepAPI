@@ -10,6 +10,10 @@ public class AuthenticationService : IAuthenticationService
     {
         _userNameToHash = new Dictionary<string, byte[]>();
         _userNameToSalt = new Dictionary<string, byte[]>();
+        
+        CreateUser("Peter", "p@ssword");
+        CreateUser("Alex", "secret");
+        
     }
 
     public void CreateUser(string userName, string password)
@@ -20,7 +24,7 @@ public class AuthenticationService : IAuthenticationService
         _userNameToHash.Add(userName, passwordHash);
         _userNameToSalt.Add(userName, salt);
     }
-    
+
     public bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
     {
         using (var hmac = new System.Security.Cryptography.HMACSHA512(storedSalt))
@@ -31,6 +35,7 @@ public class AuthenticationService : IAuthenticationService
                 if (computedHash[i] != storedHash[i]) return false;
             }
         }
+
         return true;
     }
 
@@ -41,5 +46,13 @@ public class AuthenticationService : IAuthenticationService
             passwordSalt = hmac.Key;
             passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
         }
+    }
+
+    public bool ValidateUser(string userName, string password)
+    {
+        byte[] storePasswordHash = _userNameToHash[userName];
+        byte[] salt = _userNameToSalt[userName];
+
+        return VerifyPasswordHash(password, storePasswordHash, salt);
     }
 }
